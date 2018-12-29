@@ -1,8 +1,14 @@
 class TasksController < ApplicationController
+  before_action :require_user_logged_in
   before_action :set_task, only: [:show, :edit, :update, :destroy]
-  
+    
   def index
-    @tasks = Task.all.page(params[:page]).per(3)
+    #メンタリング時の参考レコード
+    #@tasks = Task.all.page(params[:page]).per(3)
+    @tasks = current_user.tasks.page(params[:page]).per(3)
+    #@tasks = Task.where(user_id: session[:user_id])
+    #@tasks = Task.where(id:session[:user_id])page(params[:page]).per(3)
+    #@tasks = Task.joins(:user).includes(:user)
   end
 
   def show
@@ -15,7 +21,6 @@ class TasksController < ApplicationController
 
   def create
     @task = Task.new(task_params)
-
     if @task.save
       flash[:success] = 'Task が正常に登録されました'
       redirect_to @task
@@ -31,7 +36,6 @@ class TasksController < ApplicationController
 
   def update
     set_task
-
     if @task.update(task_params)
       flash[:success] = 'Task は正常に更新されました'
       redirect_to @task
@@ -58,7 +62,12 @@ class TasksController < ApplicationController
   
   # Strong Parameter
   def task_params
-    params.require(:task).permit(:content, :status)
+    params.require(:task).permit(:content, :status).merge(user_id: current_user.id)
   end
     
+  def require_user_logged_in
+    unless logged_in?
+      redirect_to login_url
+    end
+  end
 end

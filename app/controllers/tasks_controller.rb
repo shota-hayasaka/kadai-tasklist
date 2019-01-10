@@ -1,7 +1,7 @@
 class TasksController < ApplicationController
   before_action :require_user_logged_in
   before_action :set_task, only: [:show, :edit, :update, :destroy]
-    
+
   def index
     #メンタリング時の参考レコード
     #@tasks = Task.all.page(params[:page]).per(3)
@@ -12,7 +12,6 @@ class TasksController < ApplicationController
   end
 
   def show
-    set_task
   end
 
   def new
@@ -20,7 +19,7 @@ class TasksController < ApplicationController
   end
 
   def create
-    @task = Task.new(task_params)
+    @task = current_user.tasks.build(task_params)
     if @task.save
       flash[:success] = 'Task が正常に登録されました'
       redirect_to @task
@@ -31,11 +30,9 @@ class TasksController < ApplicationController
   end
 
   def edit
-    set_task
   end
 
   def update
-    set_task
     if @task.update(task_params)
       flash[:success] = 'Task は正常に更新されました'
       redirect_to @task
@@ -46,7 +43,6 @@ class TasksController < ApplicationController
   end
 
   def destroy
-    set_task
     @task.destroy
 
     flash[:success] = 'Task は正常に削除されました'
@@ -57,17 +53,12 @@ class TasksController < ApplicationController
 
   #まとめる
   def set_task
-    @task = Task.find(params[:id])
+    @task = current_user.tasks.find_by(id: params[:id])
+    redirect_to root_url if !@task
   end
   
   # Strong Parameter
   def task_params
-    params.require(:task).permit(:content, :status).merge(user_id: current_user.id)
-  end
-    
-  def require_user_logged_in
-    unless logged_in?
-      redirect_to login_url
-    end
+    params.require(:task).permit(:content, :status)
   end
 end
